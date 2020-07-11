@@ -1,39 +1,17 @@
 from bs4 import BeautifulSoup as bs
-
 import urllib
-
 import requests
-import os
-import argparse
 
-
-
-parser = argparse.ArgumentParser()
-parser.add_argument('-tag', help = "Desired Tag")
-parser.add_argument('-pop', help = "Sort by popularity")
-parser.add_argument('-r', help = "Get random doujinshi")
-
-url = "http://nhentai.net"
-
-def setTag(tag):
-    return url + "/tag/" + tag
-
-print("Enter tag: ")
-t = input()
-
-content = requests.get(setTag(t)).content
-#print(content)
-
-soup = bs(content,'lxml')
-
-def retrieveSearch(soup):
+def retrieveSearch(tag):
+    content = requests.get("http://nhentai.net/tag/" + tag).content
+    soup = bs(content,'lxml')
     doujinsRef = soup.findAll('div',{'class': 'gallery'})
     doujins = []
     for doujinRef in doujinsRef:
         temp = {}
         temp['title'] = doujinRef.find('a').find('div',{'class','caption'}).string
         temp['thumbnail'] = doujinRef.find('a').find('img').get('data-src')
-        temp['url'] = url + doujinRef.find('a').get('href')
+        temp['url'] = "http://nhentai.net" + doujinRef.find('a').get('href')
         doujins.append(temp)
     return doujins
 
@@ -61,15 +39,20 @@ def getDoujinInfo(url):
     infoJSON['tagTypes'] = tagsJSON
     return infoJSON
 
-list = retrieveSearch(soup)
-print(list[0]['url'])
-
 def getPage(url,pageNum):
     content = requests.get(url+str(pageNum)).content
     soup = bs(content,'lxml')
     return soup.find(id="image-container").find('a').find('img').get('src')
 
-print(getPage(list[0]['url'],1))
+def getPages(url):
+    pages = int(getDoujinInfo(url)['tagTypes']['pages'][0])
+    temp = []
+    for i in range(1,pages+1):
+        temp.append(getPage(url,i))
+    return temp
+
+
+
 """
 doujins = soup.findAll('div',{'class','gallery'})
 
