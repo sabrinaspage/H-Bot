@@ -1,5 +1,7 @@
 import discord
 
+from nhentai import *
+
 client = discord.Client()
 
 @client.event
