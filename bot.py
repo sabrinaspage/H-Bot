@@ -15,6 +15,6 @@ async def on_message(message):
         await message.channel.send('Hello!')
 
     if message.content.startwith('--oof'):
-        await message.channel.send('eggplant')
+        await message.channel.send(':eggplant:')
 
 client.run('NzMwOTY1ODQwMjQ1MjkzMTA5.Xwkskw.RLP7fMwUTy-sxjfq9N7h5oHfHSU')
