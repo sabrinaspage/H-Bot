@@ -111,4 +111,25 @@ def get_all_images_of_manga(query):
     
     return images
 
-print(get_all_images_of_manga('337171'))
+
+def get_names_by_category(category, query):
+    validate_tags = ('parody', 'character', 'tag', 'artist', 'group') # tuple to prevent modification
+    if category not in validate_tags:
+        raise ValueError("type unavailable")
+    html = get_html_from_url(category + "/" + query + "/")
+    gall_container = html.find("div", {"id": "content"})
+    each_gall_group = gall_container.findAll("div", {"class": "gallery"})
+
+    collection = []
+
+    for gall in each_gall_group:
+        image = gall.find("a")['href'].replace('/g/','')
+        image_cover = get_cover_from_manga(image)
+        image_title = gall.find("div", {"class": "caption"}).getText()
+        image_info = {image_cover, image_title}
+        
+        collection.append(image_info)
+    
+    return collection
+
+print(get_names_by_category('tag', 'bandaid')[0])
