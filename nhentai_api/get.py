@@ -95,4 +95,20 @@ def get_random_image_of_manga(query):
     random_id = random.choice(thumbs)
     return get_image_of_manga_page(random_id)
 
-print(get_random_image_of_manga('337171'))
+# get all images
+# first analyze all thumbnails
+# get redirect href for all of them
+# plug id value into 
+def get_all_images_of_manga(query):
+    manga = get_html_from_url('g/' + query)
+    thumbnail_container = manga.find("div", {"id": "thumbnail-container"})
+    all_thumbs = thumbnail_container.findAll(class_="thumb-container")
+    images = []
+    for thumb in all_thumbs:
+        thumb_href = thumb.find("a")
+        image = get_image_of_manga_page(thumb_href['href'].replace('/g/', ''))
+        images.append(image)
+    
+    return images
+
+print(get_all_images_of_manga('337171'))
