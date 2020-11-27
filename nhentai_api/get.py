@@ -6,7 +6,7 @@ import random
 
 # get html json and parse it
 # optionally prettify return to organize the text
-def get_html_from_url(query: str):
+def html_from_url(query: str):
     nhentai_url = "https://nhentai.net/" + query
     r = requests.get(nhentai_url)
     soup = BeautifulSoup(r.text, 'html.parser')
@@ -15,8 +15,8 @@ def get_html_from_url(query: str):
 # get cover of manga
 # first find all classes with lazyload (which hold images)
 # then retrieve image with 'cover' in url
-def get_cover_from_manga(query: str):
-    manga = get_html_from_url('g/' + query)
+def cover_from_manga(query: str):
+    manga = html_from_url('g/' + query)
     images = manga.findAll(class_="lazyload") 
     for image in images:
         if('cover' in image['data-src']):
@@ -26,15 +26,15 @@ def get_cover_from_manga(query: str):
 # get english title of manga
 # first find header with title class
 # then find span with pretty class
-def get_en_title_of_manga(query: str):
-    manga = get_html_from_url('g/' + query)
+def en_title_of_manga(query: str):
+    manga = html_from_url('g/' + query)
     class_title = manga.find("h1", {"class": "title"})
     english_title = class_title.find("span", {"class": "pretty"}).getText()
     return english_title
 
 # same as above but japanese
-def get_jp_title_of_manga(query: str):
-    manga = get_html_from_url('g/' + query)
+def jp_title_of_manga(query: str):
+    manga = html_from_url('g/' + query)
     class_title = manga.find("h2", {"class": "title"})
     jp_title = class_title.find("span", {"class": "pretty"}).getText()
     return jp_title
@@ -45,12 +45,12 @@ def get_jp_title_of_manga(query: str):
 
 # iterate through the <a> received, and if '/tag/'
 # exists in the iteration, append to array
-def get_tags_of_manga(query: str, tag_type: str):
+def tags_of_manga(query: str, tag_type: str):
     validate_tags = ('parody', 'tag', 'artist', 'group', 'language', 'category') #tuple to prevent modification
     if tag_type not in validate_tags:
         raise ValueError("Tag unavailable")
 
-    manga = get_html_from_url('g/' + query)
+    manga = html_from_url('g/' + query)
     section_tags = manga.find("section", {"id": "tags"})
     tags_section = section_tags.findAll("a")
 
@@ -65,15 +65,15 @@ def get_tags_of_manga(query: str, tag_type: str):
     return tags
 
 # get manga id in gallery
-def get_id_of_manga(query: str):
-    manga = get_html_from_url('g/' + query)
+def id_of_manga(query: str):
+    manga = html_from_url('g/' + query)
     gallery_id = manga.find("h3", {"id": "gallery_id"})
     return gallery_id.text
 
 # get image from manga
 # query must be string to get query
-def get_image_of_manga_page(query: str):
-    manga = get_html_from_url('g/' + query)
+def image_of_manga_page(query: str):
+    manga = html_from_url('g/' + query)
     section = manga.find("section", {"id":"image-container"})
     image = section.find("img")
     return image['src']
@@ -83,8 +83,8 @@ def get_image_of_manga_page(query: str):
 # get redirect href for all of them
 # choose one randomly from array
 # plug result into get_image_of_manga_page
-def get_random_image_of_manga(query):
-    manga = get_html_from_url('g/' + query)
+def random_image_of_manga(query):
+    manga = html_from_url('g/' + query)
     thumbnail_container = manga.find("div", {"id": "thumbnail-container"})
     all_thumbs = thumbnail_container.findAll(class_="thumb-container")
     thumbs = []
@@ -93,30 +93,32 @@ def get_random_image_of_manga(query):
         thumbs.append(thumb_href['href'].replace('/g/', ''))
     
     random_id = random.choice(thumbs)
-    return get_image_of_manga_page(random_id)
+    return image_of_manga_page(random_id)
 
 # get all images
 # first analyze all thumbnails
 # get redirect href for all of them
 # plug id value into 
-def get_all_images_of_manga(query):
-    manga = get_html_from_url('g/' + query)
+def all_images_of_manga(query):
+    manga = html_from_url('g/' + query)
     thumbnail_container = manga.find("div", {"id": "thumbnail-container"})
     all_thumbs = thumbnail_container.findAll(class_="thumb-container")
     images = []
     for thumb in all_thumbs:
         thumb_href = thumb.find("a")
-        image = get_image_of_manga_page(thumb_href['href'].replace('/g/', ''))
+        image = image_of_manga_page(thumb_href['href'].replace('/g/', ''))
         images.append(image)
     
     return images
 
-
-def get_names_by_category(category, query):
+# returns set of gallery objects
+# these gallery objects refer to the cover and title of a manga
+# shown by the category and its type
+def gallery_group_info_by_category(category, type):
     validate_tags = ('parody', 'character', 'tag', 'artist', 'group') # tuple to prevent modification
     if category not in validate_tags:
         raise ValueError("type unavailable")
-    html = get_html_from_url(category + "/" + query + "/")
+    html = html_from_url(category + "/" + type + "/")
     gall_container = html.find("div", {"id": "content"})
     each_gall_group = gall_container.findAll("div", {"class": "gallery"})
 
@@ -124,7 +126,7 @@ def get_names_by_category(category, query):
 
     for gall in each_gall_group:
         image = gall.find("a")['href'].replace('/g/','')
-        image_cover = get_cover_from_manga(image)
+        image_cover = cover_from_manga(image)
         image_title = gall.find("div", {"class": "caption"}).getText()
         image_info = {image_cover, image_title}
         
@@ -132,4 +134,43 @@ def get_names_by_category(category, query):
     
     return collection
 
-print(get_names_by_category('tag', 'bandaid')[0])
+# returns set of gallery objects
+# these gallery objects refer to the cover and title of a manga
+# shown by the category and its type
+def gallery_group_info(query, sort=None):
+    append = "search/?q=" + query
+    if(sort!=None):
+        validate_tags = ('popular-today', 'popular-week', 'popular') # tuple to prevent modification
+        if sort not in validate_tags:
+            raise ValueError("sort popularity unavailable")
+        append += "&sort=" + sort
+
+    html = html_from_url(append)
+    gall_container = html.find("div", {"id": "content"})
+    each_gall_group = gall_container.findAll("div", {"class": "gallery"})
+
+    collection = []
+
+    for gall in each_gall_group:
+        image = gall.find("a")['href'].replace('/g/','')
+        image_cover = cover_from_manga(image)
+        image_title = gall.find("div", {"class": "caption"}).getText()
+        image_info = {image_cover, image_title}
+        
+        collection.append(image_info)
+    
+    return collection
+
+# goal is to limit the amount of groups which print from the collection above
+# so print ten groups. if the person wants more groups, print ten more.
+# try to optimize the function to print pictures faster. so perhaps dont return the entire
+# collection yet
+def loop_thru_array():
+    red = range(100)
+    yes = True
+    while(yes)
+        for i in red:
+            print(i)
+            if(indexOf(i) === red%10)
+
+loop_thru_array()
