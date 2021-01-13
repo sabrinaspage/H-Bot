@@ -51,3 +51,7 @@ Returns all the images of the manga. First analyzes all the thumbnails. Then get
 `def gallery_group_info(query, sort=None)`
 
 (INCOMPLETE/SLOW) Returns set of gallery objects, referring to the cover and its title, using query and sort.
+
+`def search_redirect(query, sort=None)`
+
+Redirects user to the URL searched when query is applied.
